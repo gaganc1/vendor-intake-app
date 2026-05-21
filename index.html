@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CORE DQ Hub – Data Quality Workflows</title>
-  <meta name="description" content="CORE Data Quality Team – Vendor, Customer, Email and Contact deduplication workflows powered by Azure Databricks."/>
+  <meta name="description" content="CORE Data Quality Team – Vendor, Customer, Email and Contact  workflows powered by Azure Databricks."/>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
   <style>
     /* ── TOKENS ────────────────────────────────────────────────────────── */
@@ -355,7 +355,7 @@
     </button>
     <button class="tab-btn" data-tab="dedup">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-      Vendor / Customer Dedup
+      Vendor / Customer 
     </button>
     <button class="tab-btn" data-tab="email">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -363,7 +363,7 @@
     </button>
     <button class="tab-btn" data-tab="contact">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Contact Dedup
+      Contact 
     </button>
     <button class="tab-btn" data-tab="guide">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
@@ -382,7 +382,7 @@
       <div class="wf-card" onclick="goTab('dedup')">
         <div class="wf-card-top">
           <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
-          <div><h3>Vendor / Customer Dedup</h3><span class="wf-tag auto">CVI + CDQ</span></div>
+          <div><h3>Vendor / Customer </h3><span class="wf-tag auto">CVI + CDQ</span></div>
         </div>
         <p class="wf-desc">Paste IDs → download the input CSV → run the CVI notebook in Databricks → download the output → upload to CDQ for duplicate matching.</p>
         <span class="wf-arrow">Open workflow <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
@@ -400,9 +400,9 @@
       <div class="wf-card" onclick="goTab('contact')">
         <div class="wf-card-top">
           <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-          <div><h3>Contact Deduplication</h3><span class="wf-tag manual">Manual Steps</span></div>
+          <div><h3>Contact </h3><span class="wf-tag manual">Manual Steps</span></div>
         </div>
-        <p class="wf-desc">Paste partner IDs → download the input CSV → run the Contact Dedup notebook in Databricks → download the output report.</p>
+        <p class="wf-desc">Paste partner IDs → download the input CSV → run the Contact  notebook in Databricks → download the output report.</p>
         <span class="wf-arrow">Open workflow <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
 
@@ -421,7 +421,7 @@
   <!-- ══════════════════ PAGE: VENDOR / CUSTOMER DEDUP ══════════════════ -->
   <div class="page" id="page-dedup">
     <div class="section-header">
-      <div class="section-title">Vendor / Customer Deduplication</div>
+      <div class="section-title">Vendor / Customer </div>
       <div class="section-sub">Fill in your IDs below → download the input CSV → run the notebook in Databricks → download CVI output → upload to CDQ.</div>
     </div>
 
@@ -625,8 +625,8 @@
             <div class="step-row">
               <div class="step-num">2</div>
               <div class="step-content">
-                <strong>Upload CSV & Run Email Dedup Notebook</strong>
-                <p>Log into Databricks. Upload the CSV to FileStore and run the Email Deduplication notebook in your workspace.</p>
+                <strong>Upload CSV & Run Email  Notebook</strong>
+                <p>Log into Databricks. Upload the CSV to FileStore and run the Email  notebook in your workspace.</p>
                 <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net" target="_blank" rel="noopener">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Open Databricks Workspace
@@ -636,7 +636,7 @@
             <div class="step-row">
               <div class="step-num">3</div>
               <div class="step-content">
-                <strong>Download Email Dedup Output</strong>
+                <strong>Download Email  Output</strong>
                 <p>After the notebook completes, download the output CSV from Databricks FileStore.</p>
                 <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net/browse/files/FileStore" target="_blank" rel="noopener">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -657,11 +657,11 @@
     </div>
   </div>
 
-  <!-- ══════════════════ PAGE: CONTACT DEDUP ══════════════════ -->
+  <!-- ══════════════════ PAGE: CONTACT  ══════════════════ -->
   <div class="page" id="page-contact">
     <div class="section-header">
-      <div class="section-title">Contact Person Deduplication</div>
-      <div class="section-sub">Enter partner IDs → download the input CSV → run the Contact Dedup notebook in Databricks → download the output.</div>
+      <div class="section-title">Contact Person </div>
+      <div class="section-sub">Enter partner IDs → download the input CSV → run the Contact  notebook in Databricks → download the output.</div>
     </div>
     <div class="info-banner">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.15rem;color:var(--primary)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -733,8 +733,8 @@
             <div class="step-row">
               <div class="step-num">2</div>
               <div class="step-content">
-                <strong>Upload CSV & Run Contact Dedup Notebook</strong>
-                <p>Log into Databricks. Upload the CSV to FileStore and run the Contact Deduplication notebook.</p>
+                <strong>Upload CSV & Run Contact  Notebook</strong>
+                <p>Log into Databricks. Upload the CSV to FileStore and run the Contact  notebook.</p>
                 <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net" target="_blank" rel="noopener">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                   Open Databricks Workspace
@@ -744,7 +744,7 @@
             <div class="step-row">
               <div class="step-num">3</div>
               <div class="step-content">
-                <strong>Download Contact Dedup Output</strong>
+                <strong>Download Contact  Output</strong>
                 <p>After the notebook finishes, download the output CSV from Databricks FileStore.</p>
                 <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net/browse/files/FileStore" target="_blank" rel="noopener">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
