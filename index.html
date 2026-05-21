@@ -3,583 +3,1231 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CVI Extraction – CORE Automation</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+  <title>CORE DQ Hub – Data Quality Workflows</title>
+  <meta name="description" content="CORE Data Quality Team – Vendor, Customer, Email and Contact deduplication workflows powered by Azure Databricks."/>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
   <style>
-    :root,[data-theme="light"]{
-      --text-xs:clamp(.75rem,.7rem + .25vw,.875rem);--text-sm:clamp(.875rem,.8rem + .35vw,1rem);
-      --text-base:clamp(1rem,.95rem + .25vw,1.125rem);--text-lg:clamp(1.125rem,1rem + .75vw,1.5rem);
-      --text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
-      --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;
-      --space-6:1.5rem;--space-8:2rem;--space-10:2.5rem;--space-12:3rem;--space-16:4rem;
-      --color-bg:#f7f6f2;--color-surface:#f9f8f5;--color-surface-2:#fbfbf9;
-      --color-surface-offset:#f3f0ec;--color-surface-dynamic:#e6e4df;
-      --color-border:#d4d1ca;--color-divider:#dcd9d5;
-      --color-text:#28251d;--color-text-muted:#6d6b66;--color-text-faint:#9d9a94;
-      --color-primary:#01696f;--color-primary-hover:#0c4e54;--color-primary-highlight:#cedcd8;
-      --color-success:#437a22;--color-success-highlight:#d4dfcc;
-      --color-warning:#964219;--color-warning-highlight:#ddcfc6;
-      --color-error:#a12c7b;--color-error-highlight:#e0ced7;
-      --radius-sm:.375rem;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;--radius-full:9999px;
-      --shadow-sm:0 1px 2px rgba(40,37,29,.06);--shadow-md:0 4px 12px rgba(40,37,29,.08);
-      --shadow-lg:0 12px 32px rgba(40,37,29,.12);
-      --font-display:'General Sans',sans-serif;--font-body:'Satoshi','Inter',sans-serif;
+    /* ── TOKENS ────────────────────────────────────────────────────────── */
+    :root {
+      --bg:       #f7f6f2;
+      --surface:  #ffffff;
+      --surface2: #f3f0ec;
+      --border:   #e0ddd7;
+      --divider:  #ece9e4;
+      --text:     #28251d;
+      --muted:    #6d6b66;
+      --faint:    #a09e99;
+      --primary:  #01696f;
+      --primary-h:#0c4e54;
+      --primary-l:#e4f0ef;
+      --success:  #437a22;
+      --success-l:#e6f0de;
+      --warning:  #964219;
+      --warning-l:#f3e8e1;
+      --error:    #a12c7b;
+      --error-l:  #f5e5ef;
+      --radius-sm:.375rem; --radius-md:.5rem; --radius-lg:.75rem;
+      --radius-xl:1rem;    --radius-2xl:1.5rem; --radius-full:9999px;
+      --shadow-sm:0 1px 3px rgba(40,37,29,.07);
+      --shadow-md:0 4px 16px rgba(40,37,29,.09);
+      --shadow-lg:0 12px 40px rgba(40,37,29,.13);
+      --font-display:'General Sans',sans-serif;
+      --font-body:'Satoshi',sans-serif;
     }
-    [data-theme="dark"]{
-      --color-bg:#171614;--color-surface:#1c1b19;--color-surface-2:#201f1d;
-      --color-surface-offset:#1d1c1a;--color-surface-dynamic:#2d2c2a;
-      --color-border:#393836;--color-divider:#262523;
-      --color-text:#cdccca;--color-text-muted:#9a9895;--color-text-faint:#6d6a66;
-      --color-primary:#4f98a3;--color-primary-hover:#227f8b;--color-primary-highlight:#313b3b;
-      --color-success:#6daa45;--color-success-highlight:#3a4435;
-      --color-warning:#bb653b;--color-warning-highlight:#564942;
-      --color-error:#d163a7;--color-error-highlight:#4c3d46;
-      --shadow-sm:0 1px 2px rgba(0,0,0,.2);--shadow-md:0 4px 12px rgba(0,0,0,.3);
-      --shadow-lg:0 12px 32px rgba(0,0,0,.4);
+    [data-theme="dark"] {
+      --bg:#171614; --surface:#1c1b19; --surface2:#242320;
+      --border:#363432; --divider:#2a2826;
+      --text:#cdccca; --muted:#928f8b; --faint:#5e5c58;
+      --primary:#4f98a3; --primary-h:#227f8b; --primary-l:#1e3135;
+      --success:#6daa45; --success-l:#1e2e17;
+      --warning:#bb653b; --warning-l:#2e1e15;
+      --error:#d163a7; --error-l:#2e1526;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.3);
+      --shadow-md:0 4px 16px rgba(0,0,0,.4);
+      --shadow-lg:0 12px 40px rgba(0,0,0,.5);
     }
+
+    /* ── RESET ─────────────────────────────────────────────────────────── */
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth;}
-    body{min-height:100dvh;font-family:var(--font-body);font-size:var(--text-base);line-height:1.6;color:var(--color-text);background:var(--color-bg);}
+    body{min-height:100dvh;font-family:var(--font-body);font-size:1rem;line-height:1.6;color:var(--text);background:var(--bg);transition:background .2s,color .2s;}
+    a{color:var(--primary);text-decoration:none;}
+    a:hover{text-decoration:underline;}
     button,input,textarea,select{font:inherit;color:inherit;}
     button{cursor:pointer;border:none;background:none;}
-    img{display:block;max-width:100%;}
 
-    /* Layout */
-    .app{max-width:1120px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-16);}
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);margin-bottom:var(--space-8);padding-bottom:var(--space-5);border-bottom:1px solid var(--color-divider);}
-    .brand{display:flex;align-items:center;gap:var(--space-3);}
-    .logo{width:40px;height:40px;color:var(--color-primary);flex-shrink:0;}
-    .brand-text h1{font-family:var(--font-display);font-size:var(--text-lg);line-height:1.1;font-weight:700;}
-    .brand-text p{font-size:var(--text-xs);color:var(--color-text-muted);}
-    .topbar-right{display:flex;align-items:center;gap:var(--space-3);}
-    .badge-env{padding:.25rem .75rem;border-radius:var(--radius-full);background:var(--color-primary-highlight);color:var(--color-primary);font-size:var(--text-xs);font-weight:700;letter-spacing:.04em;}
-    .theme-btn{width:40px;height:40px;border-radius:var(--radius-full);background:var(--color-surface-2);border:1px solid var(--color-border);display:grid;place-items:center;box-shadow:var(--shadow-sm);transition:background .18s;}
-    .theme-btn:hover{background:var(--color-surface-dynamic);}
+    /* ── LAYOUT ─────────────────────────────────────────────────────────── */
+    .wrap{max-width:1100px;margin:0 auto;padding:0 1.25rem 5rem;}
 
-    /* Progress stepper */
-    .stepper{display:flex;align-items:center;gap:0;margin-bottom:var(--space-8);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:var(--space-4) var(--space-5);box-shadow:var(--shadow-sm);}
-    .step-item{display:flex;align-items:center;gap:var(--space-2);flex:1;}
-    .step-item:not(:last-child)::after{content:'';flex:1;height:2px;background:var(--color-divider);margin:0 var(--space-2);border-radius:var(--radius-full);}
-    .step-item.active:not(:last-child)::after{background:var(--color-primary);}
-    .step-dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:var(--text-xs);font-weight:700;flex-shrink:0;border:2px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text-muted);transition:all .3s;}
-    .step-item.active .step-dot{background:var(--color-primary);border-color:var(--color-primary);color:#fff;}
-    .step-item.done .step-dot{background:var(--color-success);border-color:var(--color-success);color:#fff;}
-    .step-label{font-size:var(--text-xs);color:var(--color-text-muted);font-weight:600;white-space:nowrap;}
-    .step-item.active .step-label{color:var(--color-primary);}
-    .step-item.done .step-label{color:var(--color-success);}
+    /* ── TOPBAR ─────────────────────────────────────────────────────────── */
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:1.1rem 0 1rem;margin-bottom:1.5rem;
+      border-bottom:1px solid var(--divider);
+    }
+    .brand{display:flex;align-items:center;gap:.75rem;}
+    .brand-logo{width:38px;height:38px;color:var(--primary);flex-shrink:0;}
+    .brand-name{font-family:var(--font-display);font-size:1.15rem;font-weight:700;line-height:1.1;}
+    .brand-sub{font-size:.75rem;color:var(--muted);}
+    .topbar-right{display:flex;align-items:center;gap:.75rem;}
+    .env-badge{
+      padding:.25rem .75rem;border-radius:var(--radius-full);
+      background:var(--primary-l);color:var(--primary);
+      font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    }
+    .theme-btn{
+      width:38px;height:38px;border-radius:var(--radius-full);
+      background:var(--surface2);border:1px solid var(--border);
+      display:grid;place-items:center;transition:background .15s;
+    }
+    .theme-btn:hover{background:var(--border);}
 
-    /* Cards */
-    .card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);}
-    .card-body{padding:var(--space-6);}
-    .card-header{padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);}
-    .card-title{font-family:var(--font-display);font-size:var(--text-lg);font-weight:700;display:flex;align-items:center;gap:var(--space-2);}
-    .eyebrow{display:inline-flex;align-items:center;gap:var(--space-2);padding:.2rem .7rem;border-radius:var(--radius-full);background:var(--color-primary-highlight);color:var(--color-primary);font-size:var(--text-xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+    /* ── NAV TABS ─────────────────────────────────────────────────────────── */
+    .tabs-bar{
+      display:flex;gap:.25rem;overflow-x:auto;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-xl);padding:.3rem;
+      box-shadow:var(--shadow-sm);margin-bottom:2rem;
+      scrollbar-width:none;
+    }
+    .tabs-bar::-webkit-scrollbar{display:none;}
+    .tab-btn{
+      display:flex;align-items:center;gap:.5rem;
+      padding:.45rem 1rem;border-radius:var(--radius-lg);
+      font-size:.875rem;font-weight:600;color:var(--muted);
+      transition:all .18s;white-space:nowrap;flex-shrink:0;
+    }
+    .tab-btn:hover{background:var(--surface2);color:var(--text);}
+    .tab-btn.active{background:var(--primary);color:#fff;box-shadow:var(--shadow-sm);}
+    .tab-btn svg{opacity:.7;}
+    .tab-btn.active svg{opacity:1;}
 
-    /* Grid layout */
-    .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);}
-    .full-width{grid-column:1/-1;}
+    /* ── PAGES ─────────────────────────────────────────────────────────── */
+    .page{display:none;}
+    .page.active{display:block;}
 
-    /* Form */
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-top:var(--space-5);}
-    .field{display:flex;flex-direction:column;gap:var(--space-2);}
+    /* ── SHARED SECTION HEADER ─────────────────────────────────────────── */
+    .section-header{margin-bottom:1.75rem;}
+    .section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;margin-bottom:.3rem;}
+    .section-sub{font-size:.9rem;color:var(--muted);}
+
+    /* ── HOME: WORKFLOW CARDS ─────────────────────────────────────────── */
+    .wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;}
+    .wf-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-xl);box-shadow:var(--shadow-md);
+      padding:1.5rem;display:flex;flex-direction:column;gap:1rem;
+      cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .15s;
+    }
+    .wf-card:hover{box-shadow:var(--shadow-lg);border-color:var(--primary);transform:translateY(-2px);}
+    .wf-card-top{display:flex;align-items:center;gap:.875rem;}
+    .wf-icon{
+      width:44px;height:44px;border-radius:var(--radius-lg);
+      background:var(--primary-l);color:var(--primary);
+      display:grid;place-items:center;flex-shrink:0;
+    }
+    .wf-card h3{font-family:var(--font-display);font-size:1rem;font-weight:700;line-height:1.3;}
+    .wf-tag{
+      display:inline-flex;align-items:center;padding:.15rem .55rem;
+      border-radius:var(--radius-full);font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:.2rem;
+    }
+    .wf-tag.auto{background:var(--primary-l);color:var(--primary);}
+    .wf-tag.manual{background:var(--warning-l);color:var(--warning);}
+    .wf-desc{font-size:.875rem;color:var(--muted);flex:1;line-height:1.55;}
+    .wf-arrow{
+      display:inline-flex;align-items:center;gap:.4rem;
+      font-size:.82rem;font-weight:700;color:var(--primary);margin-top:.25rem;
+    }
+
+    /* ── WORKFLOW PAGE LAYOUT ─────────────────────────────────────────── */
+    .wf-page-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    .col-full{grid-column:1/-1;}
+
+    /* ── CARD ─────────────────────────────────────────────────────────── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);}
+    .card-hd{
+      padding:1rem 1.5rem;border-bottom:1px solid var(--divider);
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    }
+    .card-title{font-family:var(--font-display);font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:.5rem;}
+    .card-body{padding:1.5rem;}
+    .pill{
+      padding:.2rem .7rem;border-radius:var(--radius-full);
+      background:var(--primary-l);color:var(--primary);
+      font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    }
+
+    /* ── FORM ─────────────────────────────────────────────────────────── */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
+    .field{display:flex;flex-direction:column;gap:.4rem;}
     .field.full{grid-column:1/-1;}
-    label{font-size:var(--text-sm);font-weight:600;}
-    .sublabel{font-size:var(--text-xs);color:var(--color-text-muted);}
-    input,select,textarea{width:100%;min-height:48px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-4);outline:none;transition:border-color .18s,box-shadow .18s;}
-    textarea{min-height:130px;padding:var(--space-3) var(--space-4);resize:vertical;}
-    input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--color-primary);box-shadow:0 0 0 3px color-mix(in oklab,var(--color-primary) 18%,transparent);}
-    input[type="password"]{letter-spacing:.1em;}
+    label{font-size:.85rem;font-weight:600;}
+    .sub-label{font-size:.75rem;color:var(--muted);}
+    input,select,textarea{
+      width:100%;min-height:44px;
+      background:var(--surface2);border:1px solid var(--border);
+      border-radius:var(--radius-md);padding:0 .875rem;
+      outline:none;transition:border-color .15s,box-shadow .15s;
+    }
+    textarea{min-height:120px;padding:.75rem .875rem;resize:vertical;}
+    input:focus-visible,select:focus-visible,textarea:focus-visible{
+      border-color:var(--primary);
+      box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent);
+    }
+    input[type="password"]{letter-spacing:.12em;}
 
-    /* Buttons */
-    .btn{min-height:48px;padding:0 var(--space-6);border-radius:var(--radius-full);font-size:var(--text-sm);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);transition:background .18s,box-shadow .18s,opacity .18s;}
+    /* ── BUTTONS ─────────────────────────────────────────────────────── */
+    .btn{
+      min-height:44px;padding:0 1.5rem;border-radius:var(--radius-full);
+      font-size:.875rem;font-weight:700;
+      display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+      transition:background .15s,box-shadow .15s,opacity .15s;
+    }
     .btn:disabled{opacity:.45;cursor:not-allowed;}
-    .btn-primary{background:var(--color-primary);color:#fff;box-shadow:var(--shadow-sm);}
-    .btn-primary:not(:disabled):hover{background:var(--color-primary-hover);}
-    .btn-secondary{background:var(--color-surface-2);border:1px solid var(--color-border);}
-    .btn-secondary:not(:disabled):hover{background:var(--color-surface-dynamic);}
-    .btn-success{background:var(--color-success);color:#fff;}
-    .btn-lg{min-height:56px;padding:0 var(--space-8);font-size:var(--text-base);}
-    .btn-group{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-5);}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:var(--shadow-sm);}
+    .btn-primary:not(:disabled):hover{background:var(--primary-h);}
+    .btn-ghost{background:var(--surface2);border:1px solid var(--border);}
+    .btn-ghost:not(:disabled):hover{background:var(--border);}
+    .btn-success{background:var(--success);color:#fff;}
+    .btn-lg{min-height:52px;padding:0 2rem;font-size:.95rem;}
+    .btn-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.25rem;}
 
-    /* Status panel */
-    .status-panel{border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);margin-top:var(--space-5);display:flex;align-items:flex-start;gap:var(--space-3);border:1px solid transparent;transition:all .3s;}
-    .status-panel.idle{background:var(--color-surface-offset);border-color:var(--color-divider);}
-    .status-panel.running{background:color-mix(in oklab,var(--color-primary) 8%,var(--color-surface));border-color:color-mix(in oklab,var(--color-primary) 25%,transparent);}
-    .status-panel.success{background:color-mix(in oklab,var(--color-success) 8%,var(--color-surface));border-color:color-mix(in oklab,var(--color-success) 25%,transparent);}
-    .status-panel.error{background:color-mix(in oklab,var(--color-error) 8%,var(--color-surface));border-color:color-mix(in oklab,var(--color-error) 25%,transparent);}
-    .status-icon{font-size:1.4rem;flex-shrink:0;margin-top:.1rem;}
-    .status-title{font-weight:700;font-size:var(--text-sm);}
-    .status-msg{font-size:var(--text-sm);color:var(--color-text-muted);margin-top:.2rem;}
+    /* ── STATUS PANEL ─────────────────────────────────────────────────── */
+    .status-panel{
+      border-radius:var(--radius-lg);padding:1rem 1.25rem;
+      margin-top:1.25rem;display:flex;align-items:flex-start;gap:.875rem;
+      border:1px solid transparent;transition:all .25s;
+    }
+    .sp-idle{background:var(--surface2);border-color:var(--divider);}
+    .sp-run{background:color-mix(in oklab,var(--primary) 8%,var(--surface));border-color:color-mix(in oklab,var(--primary) 22%,transparent);}
+    .sp-ok{background:color-mix(in oklab,var(--success) 8%,var(--surface));border-color:color-mix(in oklab,var(--success) 22%,transparent);}
+    .sp-err{background:color-mix(in oklab,var(--error) 8%,var(--surface));border-color:color-mix(in oklab,var(--error) 22%,transparent);}
+    .sp-icon{font-size:1.3rem;flex-shrink:0;margin-top:.1rem;}
+    .sp-title{font-weight:700;font-size:.875rem;}
+    .sp-msg{font-size:.85rem;color:var(--muted);margin-top:.15rem;}
 
-    /* Progress bar */
-    .progress-wrap{margin-top:var(--space-3);height:6px;background:var(--color-divider);border-radius:var(--radius-full);overflow:hidden;}
-    .progress-bar{height:100%;background:var(--color-primary);border-radius:var(--radius-full);width:0%;transition:width .5s ease;}
+    /* ── PROGRESS ─────────────────────────────────────────────────────── */
+    .prog-wrap{margin-top:.875rem;height:5px;background:var(--divider);border-radius:var(--radius-full);overflow:hidden;}
+    .prog-bar{height:100%;background:var(--primary);border-radius:var(--radius-full);width:0;transition:width .5s;}
     @keyframes indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
-    .progress-bar.indeterminate{width:30%;animation:indeterminate 1.4s ease-in-out infinite;}
+    .prog-bar.indet{width:30%;animation:indeterminate 1.4s ease-in-out infinite;}
 
-    /* Stats row */
-    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-top:var(--space-5);}
-    .stat-box{padding:var(--space-4);background:var(--color-surface-offset);border-radius:var(--radius-lg);border:1px solid var(--color-divider);text-align:center;}
-    .stat-val{font-size:var(--text-lg);font-weight:700;font-family:var(--font-display);}
-    .stat-lbl{font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;}
+    /* ── STATS ROW ────────────────────────────────────────────────────── */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1.25rem;}
+    .stat-box{padding:.875rem;background:var(--surface2);border-radius:var(--radius-lg);border:1px solid var(--divider);text-align:center;}
+    .stat-val{font-size:1.2rem;font-weight:700;font-family:var(--font-display);}
+    .stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem;}
 
-    /* Log box */
-    .log-box{background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);font-size:var(--text-xs);font-family:'Courier New',monospace;color:var(--color-text-muted);height:140px;overflow-y:auto;margin-top:var(--space-4);line-height:1.8;}
-    .log-line{padding:.1rem 0;border-bottom:1px solid color-mix(in oklab,var(--color-divider) 50%,transparent);}
+    /* ── LOG BOX ──────────────────────────────────────────────────────── */
+    .log-box{
+      background:var(--bg);border:1px solid var(--divider);
+      border-radius:var(--radius-md);padding:.75rem 1rem;
+      font-size:.75rem;font-family:'Courier New',monospace;color:var(--muted);
+      height:130px;overflow-y:auto;margin-top:1rem;line-height:1.8;
+    }
+    .log-line{padding:.05rem 0;border-bottom:1px solid color-mix(in oklab,var(--divider) 50%,transparent);}
     .log-line:last-child{border:none;}
-    .log-time{color:var(--color-text-faint);margin-right:var(--space-2);}
-    .log-ok{color:var(--color-success);}
-    .log-run{color:var(--color-primary);}
-    .log-err{color:var(--color-error);}
+    .lt{color:var(--faint);margin-right:.5rem;}
+    .lok{color:var(--success);}
+    .lrun{color:var(--primary);}
+    .lerr{color:var(--error);}
 
-    /* CDQ Instructions */
-    .cdq-steps{display:grid;gap:var(--space-3);margin-top:var(--space-4);}
-    .cdq-step{display:flex;gap:var(--space-3);padding:var(--space-3);background:var(--color-surface-offset);border-radius:var(--radius-md);border:1px solid var(--color-divider);}
-    .cdq-num{width:24px;height:24px;border-radius:50%;background:var(--color-primary);color:#fff;font-size:var(--text-xs);font-weight:700;display:grid;place-items:center;flex-shrink:0;}
-    .cdq-step strong{display:block;font-size:var(--text-sm);}
-    .cdq-step span{font-size:var(--text-xs);color:var(--color-text-muted);}
+    /* ── DOWNLOAD BOX ────────────────────────────────────────────────── */
+    .dl-box{
+      display:none;
+      background:color-mix(in oklab,var(--success) 7%,var(--surface));
+      border:2px dashed color-mix(in oklab,var(--success) 35%,transparent);
+      border-radius:var(--radius-xl);padding:2rem 1.5rem;text-align:center;margin-top:1.25rem;
+    }
+    .dl-box.show{display:block;}
+    .dl-box h3{font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:.4rem;}
+    .dl-box p{color:var(--muted);font-size:.85rem;max-width:38ch;margin:0 auto .875rem;}
+    .dl-btn-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;}
 
-    /* Download area */
-    .download-box{background:color-mix(in oklab,var(--color-success) 8%,var(--color-surface));border:2px dashed color-mix(in oklab,var(--color-success) 40%,transparent);border-radius:var(--radius-lg);padding:var(--space-8) var(--space-6);text-align:center;margin-top:var(--space-5);display:none;}
-    .download-box.visible{display:block;}
-    .download-box h3{font-family:var(--font-display);font-size:var(--text-lg);margin-bottom:var(--space-2);}
-    .download-box p{color:var(--color-text-muted);font-size:var(--text-sm);max-width:40ch;margin:0 auto var(--space-5);}
+    /* ── TOKEN NOTE ──────────────────────────────────────────────────── */
+    .token-note{
+      background:var(--warning-l);border:1px solid color-mix(in oklab,var(--warning) 28%,transparent);
+      border-radius:var(--radius-md);padding:.625rem .875rem;
+      font-size:.75rem;color:var(--muted);margin-top:.5rem;
+    }
 
-    /* Token warning */
-    .token-note{background:color-mix(in oklab,var(--color-warning) 8%,var(--color-surface));border:1px solid color-mix(in oklab,var(--color-warning) 30%,transparent);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-3);}
+    /* ── INFO BANNER ─────────────────────────────────────────────────── */
+    .info-banner{
+      background:var(--primary-l);border:1px solid color-mix(in oklab,var(--primary) 22%,transparent);
+      border-radius:var(--radius-lg);padding:1rem 1.25rem;
+      font-size:.875rem;color:var(--muted);margin-bottom:1.5rem;
+      display:flex;gap:.75rem;align-items:flex-start;
+    }
+    .info-banner strong{color:var(--text);}
 
-    .hidden{display:none!important;}
-    @media(max-width:780px){
-      .main-grid{grid-template-columns:1fr;}
+    /* ── STEPS LIST ──────────────────────────────────────────────────── */
+    .steps-list{display:flex;flex-direction:column;gap:.75rem;}
+    .step-row{
+      display:flex;gap:.875rem;align-items:flex-start;
+      padding:1rem 1.125rem;background:var(--surface2);
+      border-radius:var(--radius-lg);border:1px solid var(--divider);
+    }
+    .step-num{
+      width:26px;height:26px;border-radius:50%;flex-shrink:0;
+      background:var(--primary);color:#fff;
+      font-size:.75rem;font-weight:700;display:grid;place-items:center;margin-top:.1rem;
+    }
+    .step-content strong{display:block;font-size:.9rem;font-weight:600;margin-bottom:.25rem;}
+    .step-content p{font-size:.82rem;color:var(--muted);line-height:1.55;}
+    .step-content .db-link{
+      display:inline-flex;align-items:center;gap:.35rem;
+      margin-top:.5rem;font-size:.82rem;font-weight:700;
+      color:var(--primary);padding:.3rem .75rem;
+      background:var(--primary-l);border-radius:var(--radius-full);
+      transition:background .15s;
+    }
+    .step-content .db-link:hover{background:color-mix(in oklab,var(--primary) 18%,transparent);text-decoration:none;}
+
+    /* ── CDQ STEPS ───────────────────────────────────────────────────── */
+    .cdq-list{display:flex;flex-direction:column;gap:.75rem;margin-top:.75rem;}
+    .cdq-row{display:flex;gap:.75rem;padding:.875rem 1rem;background:var(--surface2);border-radius:var(--radius-lg);border:1px solid var(--divider);}
+    .cdq-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:.72rem;font-weight:700;display:grid;place-items:center;flex-shrink:0;margin-top:.1rem;}
+    .cdq-row strong{display:block;font-size:.875rem;font-weight:600;}
+    .cdq-row span{font-size:.8rem;color:var(--muted);}
+
+    /* ── STEPPER ─────────────────────────────────────────────────────── */
+    .stepper{
+      display:flex;align-items:center;
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
+      padding:.875rem 1.25rem;box-shadow:var(--shadow-sm);margin-bottom:1.75rem;
+      overflow-x:auto;scrollbar-width:none;gap:0;
+    }
+    .stepper::-webkit-scrollbar{display:none;}
+    .s-item{display:flex;align-items:center;gap:.4rem;flex:1;min-width:0;}
+    .s-item:not(:last-child)::after{content:'';flex:1;height:2px;background:var(--divider);margin:0 .4rem;border-radius:var(--radius-full);}
+    .s-item.done:not(:last-child)::after,.s-item.active:not(:last-child)::after{background:var(--primary);}
+    .s-dot{
+      width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+      font-size:.72rem;font-weight:700;flex-shrink:0;
+      border:2px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .25s;
+    }
+    .s-item.active .s-dot{background:var(--primary);border-color:var(--primary);color:#fff;}
+    .s-item.done .s-dot{background:var(--success);border-color:var(--success);color:#fff;}
+    .s-label{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;}
+    .s-item.active .s-label{color:var(--primary);}
+    .s-item.done .s-label{color:var(--success);}
+
+    /* ── GUIDE TABLE ─────────────────────────────────────────────────── */
+    .rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1rem;}
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────────── */
+    @media(max-width:760px){
+      .wf-page-grid{grid-template-columns:1fr;}
       .form-grid{grid-template-columns:1fr;}
       .stats-row{grid-template-columns:1fr 1fr;}
-      .stepper{flex-wrap:wrap;gap:var(--space-2);}
-      .step-item:not(:last-child)::after{display:none;}
+      .rules-grid{grid-template-columns:1fr;}
     }
   </style>
 </head>
 <body>
-<div class="app">
+<div class="wrap">
 
-  <!-- Top bar -->
+  <!-- ── TOPBAR ─────────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="brand">
-      <svg class="logo" viewBox="0 0 48 48" fill="none" aria-label="CVI Automation">
-        <rect x="4" y="6" width="40" height="36" rx="10" stroke="currentColor" stroke-width="3.5"/>
-        <path d="M14 18h20M14 24h20M14 30h10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-        <circle cx="37" cy="30" r="5.5" fill="currentColor"/>
-        <path d="M34 30l2 2 4-3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg class="brand-logo" viewBox="0 0 48 48" fill="none">
+        <rect x="4" y="6" width="40" height="36" rx="9" stroke="currentColor" stroke-width="3.2"/>
+        <path d="M13 17h22M13 24h22M13 31h12" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+        <circle cx="37" cy="31" r="6" fill="currentColor"/>
+        <path d="M34.2 31l2 2 4.2-3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div class="brand-text">
-        <h1>CVI Extraction – CORE Automation</h1>
-        <p>Vendor &amp; Customer Deduplication Pipeline · Azure Databricks</p>
+      <div>
+        <div class="brand-name">CORE DQ Hub</div>
+        <div class="brand-sub">Data Quality Workflows · Azure Databricks</div>
       </div>
     </div>
     <div class="topbar-right">
-      <span class="badge-env">Azure Databricks</span>
-      <button class="theme-btn" data-theme-toggle aria-label="Toggle theme"></button>
+      <span class="env-badge">Bayer · CORE</span>
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle theme"></button>
     </div>
   </header>
 
-  <!-- Stepper -->
-  <nav class="stepper" aria-label="Process steps">
-    <div class="step-item active" id="s1"><div class="step-dot">1</div><span class="step-label">Enter IDs</span></div>
-    <div class="step-item" id="s2"><div class="step-dot">2</div><span class="step-label">Run CVI</span></div>
-    <div class="step-item" id="s3"><div class="step-dot">3</div><span class="step-label">Download CVI</span></div>
-    <div class="step-item" id="s4"><div class="step-dot">4</div><span class="step-label">Upload to CDQ</span></div>
-    <div class="step-item" id="s5"><div class="step-dot">5</div><span class="step-label">Validate Duplicates</span></div>
+  <!-- ── NAV TABS ────────────────────────────────────────────────────── -->
+  <nav class="tabs-bar" role="tablist" id="tabsBar">
+    <button class="tab-btn active" data-tab="home">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="tab-btn" data-tab="dedup">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Vendor / Customer Dedup
+    </button>
+    <button class="tab-btn" data-tab="email">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Email cleaning
+    </button>
+    <button class="tab-btn" data-tab="contact">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contact Dedup
+    </button>
+    <button class="tab-btn" data-tab="guide">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Guide
+    </button>
   </nav>
 
-  <div class="main-grid">
+  <!-- ══════════════════ PAGE: HOME ══════════════════ -->
+  <div class="page active" id="page-home">
+    <div class="section-header">
+      <div class="section-title">Data Quality Workflows</div>
+      <div class="section-sub">Select a workflow. Download your CSV, open the Databricks link, run the notebook, and get your results.</div>
+    </div>
+    <div class="wf-grid">
 
-    <!-- LEFT: Input form -->
-    <section class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Business Input
-        </span>
-        <span class="eyebrow">Step 1</span>
+      <div class="wf-card" onclick="goTab('dedup')">
+        <div class="wf-card-top">
+          <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+          <div><h3>Vendor / Customer Dedup</h3><span class="wf-tag auto">CVI + CDQ</span></div>
+        </div>
+        <p class="wf-desc">Paste IDs → download the input CSV → run the CVI notebook in Databricks → download the output → upload to CDQ for duplicate matching.</p>
+        <span class="wf-arrow">Open workflow <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
-      <div class="card-body">
-        <p style="color:var(--color-text-muted);font-size:var(--text-sm);">Paste your Vendor or Customer numbers below. The system will trigger the Databricks notebook automatically — no manual steps needed.</p>
-        <form id="intakeForm">
-          <div class="form-grid">
-            <div class="field">
-              <label for="requester">Your name</label>
-              <input id="requester" type="text" placeholder="e.g. Gagan C" autocomplete="name"/>
-            </div>
-            <div class="field">
-              <label for="sourceSystem">Source system</label>
-              <select id="sourceSystem">
-                <option value="PMD">PMD</option>
-                <option value="P08">P08</option>
-                <option value="P2R">P2R</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="idType">ID type</label>
-              <select id="idType">
-                <option value="Vendor">Vendor</option>
-                <option value="Customer">Customer</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="country">Country <span class="sublabel">(optional)</span></label>
-              <input id="country" type="text" placeholder="e.g. IN, US, DE"/>
-            </div>
-            <div class="field full">
-              <label for="rawIds">Vendor / Customer numbers</label>
-              <textarea id="rawIds" placeholder="Paste IDs here — one per line or comma separated:
-5001
-5002
-5003
-or 5001,5002,5003"></textarea>
-            </div>
-            <!-- Token (hidden by default, shown in settings) -->
-            <div class="field full" id="tokenField">
-              <label for="apiToken">Databricks API token <span class="sublabel">(stored in this session only)</span></label>
-              <input id="apiToken" type="password" placeholder="dapi..." value="dapi590e6d980f0ae89a57d347f4a1483bf0-2"/>
-              <div class="token-note">⚠️ Your token is only stored in memory for this browser session and never sent anywhere except directly to your Azure Databricks workspace.</div>
-            </div>
-          </div>
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary btn-lg" id="runBtn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Run CVI Extraction
-            </button>
-            <button type="button" class="btn btn-secondary" id="sampleBtn">Load sample</button>
-            <button type="reset" class="btn btn-secondary">Clear</button>
-          </div>
-        </form>
-      </div>
-    </section>
 
-    <!-- RIGHT: Status + log -->
-    <section class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Live Status
-        </span>
-        <span class="eyebrow" id="statusBadge">Waiting</span>
+      <div class="wf-card" onclick="goTab('email')">
+        <div class="wf-card-top">
+          <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div><h3>Email Cleaning</h3><span class="wf-tag manual">Manual Steps</span></div>
+        </div>
+        <p class="wf-desc">Paste partner IDs → download the input CSV → run the Email Cleaning notebook in Databricks → download the output report.</p>
+        <span class="wf-arrow">Open workflow <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
-      <div class="card-body">
-        <div class="status-panel idle" id="statusPanel">
-          <div class="status-icon">⏳</div>
-          <div>
-            <div class="status-title">Ready to run</div>
-            <div class="status-msg">Fill in the IDs on the left and click <strong>Run CVI Extraction</strong>.</div>
-          </div>
-        </div>
-        <div class="progress-wrap" id="progressWrap" style="display:none;">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <div class="stats-row">
-          <div class="stat-box"><div class="stat-val" id="statIDs">—</div><div class="stat-lbl">IDs submitted</div></div>
-          <div class="stat-box"><div class="stat-val" id="statSystem">—</div><div class="stat-lbl">Source system</div></div>
-          <div class="stat-box"><div class="stat-val" id="statRunID">—</div><div class="stat-lbl">Run ID</div></div>
-        </div>
-        <div class="log-box" id="logBox"><div class="log-line"><span class="log-time">--:--:--</span>System ready. Waiting for input.</div></div>
 
-        <!-- Download CVI box -->
-        <div class="download-box" id="downloadBox">
-          <h3>✅ CVI Output Ready</h3>
-          <p>Your CVI file has been generated by Databricks and is ready to download.</p>
-          <div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-success btn-lg" id="downloadCviBtn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download CVI CSV
-            </button>
-            <a href="https://cdq.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">Open CDQ →</a>
-          </div>
+      <div class="wf-card" onclick="goTab('contact')">
+        <div class="wf-card-top">
+          <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div><h3>Contact Deduplication</h3><span class="wf-tag manual">Manual Steps</span></div>
         </div>
+        <p class="wf-desc">Paste partner IDs → download the input CSV → run the Contact Dedup notebook in Databricks → download the output report.</p>
+        <span class="wf-arrow">Open workflow <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
-    </section>
 
-    <!-- BOTTOM: CDQ instructions -->
-    <section class="card full-width">
-      <div class="card-header">
-        <span class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          Next: CDQ Duplicate Matching
-        </span>
-        <span class="eyebrow">Steps 4 &amp; 5</span>
-      </div>
-      <div class="card-body">
-        <p style="color:var(--color-text-muted);font-size:var(--text-sm);margin-bottom:var(--space-2);">Once you download the CVI file, follow these steps in CDQ to run the deduplication check.</p>
-        <div class="cdq-steps">
-          <div class="cdq-step"><div class="cdq-num">1</div><div><strong>Upload CVI to CDQ Data Mirror Management</strong><span>Go to CDQ → Data Mirror Management → Upload using General Mapping. Ensure NULL values are included where applicable.</span></div></div>
-          <div class="cdq-step"><div class="cdq-num">2</div><div><strong>Configure Duplicate Matching</strong><span>Go to Duplicate Matching → Upload Configuration File. Adjust fuzzy matching threshold values if needed.</span></div></div>
-          <div class="cdq-step"><div class="cdq-num">3</div><div><strong>Select matching mode</strong><span>Self-match: select one data source. Cross-system (e.g. PMD vs P08): select Pattern + Candidate sources.</span></div></div>
-          <div class="cdq-step"><div class="cdq-num">4</div><div><strong>US data rule</strong><span>If data includes US records, remove Tax Number 1–5 columns from the upload template before running.</span></div></div>
-          <div class="cdq-step"><div class="cdq-num">5</div><div><strong>Download results → Duplicate Consolidation</strong><span>Always select <em>Duplicate Consolidation</em> as the download option. Validate results and block or delete confirmed duplicate Vendors/Customers before migration.</span></div></div>
+      <div class="wf-card" onclick="goTab('guide')">
+        <div class="wf-card-top">
+          <div class="wf-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          <div><h3>Full Process Guide</h3><span class="wf-tag auto">Reference</span></div>
         </div>
+        <p class="wf-desc">End-to-end reference: Databricks extraction → General Mapping → CVI linkage → CDQ duplicate matching and download rules.</p>
+        <span class="wf-arrow">View guide <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
       </div>
-    </section>
 
+    </div>
   </div>
-</div>
+
+  <!-- ══════════════════ PAGE: VENDOR / CUSTOMER DEDUP ══════════════════ -->
+  <div class="page" id="page-dedup">
+    <div class="section-header">
+      <div class="section-title">Vendor / Customer Deduplication</div>
+      <div class="section-sub">Fill in your IDs below → download the input CSV → run the notebook in Databricks → download CVI output → upload to CDQ.</div>
+    </div>
+
+    <nav class="stepper">
+      <div class="s-item active" id="ds1"><div class="s-dot">1</div><span class="s-label">Enter IDs</span></div>
+      <div class="s-item" id="ds2"><div class="s-dot">2</div><span class="s-label">Download CSV</span></div>
+      <div class="s-item" id="ds3"><div class="s-dot">3</div><span class="s-label">Run in Databricks</span></div>
+      <div class="s-item" id="ds4"><div class="s-dot">4</div><span class="s-label">Download CVI</span></div>
+      <div class="s-item" id="ds5"><div class="s-dot">5</div><span class="s-label">Upload to CDQ</span></div>
+    </nav>
+
+    <div class="wf-page-grid">
+
+      <!-- Input Form -->
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Business Input
+          </span>
+          <span class="pill">Step 1</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.875rem;color:var(--muted);">Enter IDs below and click <strong>Download Input CSV</strong>. Then go to Databricks, upload the CSV, run the notebook, and download the output.</p>
+          <form id="dedupForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="requester">Your name</label>
+                <input id="requester" type="text" placeholder="e.g. Gagan C" autocomplete="name"/>
+              </div>
+              <div class="field">
+                <label for="sourceSystem">Source system</label>
+                <select id="sourceSystem">
+                  <option value="PMD">PMD</option>
+                  <option value="P08">P08</option>
+                  <option value="P2R">P2R</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="idType">ID type</label>
+                <select id="idType">
+                  <option value="Vendor">Vendor</option>
+                  <option value="Customer">Customer</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="country">Country <span class="sub-label">(optional)</span></label>
+                <input id="country" type="text" placeholder="e.g. IN, US, DE"/>
+              </div>
+              <div class="field full">
+                <label for="rawIds">Vendor / Customer numbers</label>
+                <textarea id="rawIds" placeholder="Paste IDs — one per line or comma separated:&#10;5001&#10;5002&#10;5003&#10;or 5001,5002,5003"></textarea>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary btn-lg" id="dlCsvBtn">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Input CSV
+              </button>
+              <button type="button" class="btn btn-ghost" id="sampleBtn">Load sample</button>
+              <button type="reset" class="btn btn-ghost">Clear</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Next Steps -->
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Next Steps
+          </span>
+          <span class="pill">Steps 2–4</span>
+        </div>
+        <div class="card-body">
+          <div class="steps-list">
+            <div class="step-row">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <strong>Upload CSV to Databricks & Run Notebook</strong>
+                <p>Log into Databricks. Go to your workspace, upload the downloaded CSV to the FileStore, and run the CVI Extraction notebook.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks Workspace
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <strong>Download CVI Output from FileStore</strong>
+                <p>After the notebook finishes, go to Databricks FileStore and download the CVI output CSV file.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net/browse/files/FileStore" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks FileStore
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <strong>Upload CVI output to CDQ</strong>
+                <p>Go to CDQ → Data Mirror Management → Upload using General Mapping. Then run Duplicate Matching and download <em>Duplicate Consolidation</em>.</p>
+                <a class="db-link" href="https://cdq.com" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open CDQ Portal
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CDQ Instructions -->
+      <section class="card col-full">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            CDQ Duplicate Matching — Steps 4 &amp; 5
+          </span>
+          <span class="pill">Steps 4–5</span>
+        </div>
+        <div class="card-body">
+          <div class="cdq-list">
+            <div class="cdq-row"><div class="cdq-num">1</div><div><strong>Upload to CDQ Data Mirror Management</strong><span>Go to CDQ → Data Mirror Management → Upload using General Mapping. NULL values must be included where applicable — do not replace with blank strings.</span></div></div>
+            <div class="cdq-row"><div class="cdq-num">2</div><div><strong>Configure Duplicate Matching</strong><span>Go to Duplicate Matching → Upload Configuration File. Adjust fuzzy matching thresholds if results are over/under-matching.</span></div></div>
+            <div class="cdq-row"><div class="cdq-num">3</div><div><strong>Select matching mode</strong><span>Self-match: select one data source. Cross-system (PMD vs P08): select Pattern + Candidate sources.</span></div></div>
+            <div class="cdq-row"><div class="cdq-num">4</div><div><strong>US data rule</strong><span>Remove Tax Number 1–5 columns from the upload template for any US records before running matching.</span></div></div>
+            <div class="cdq-row"><div class="cdq-num">5</div><div><strong>Download → Duplicate Consolidation</strong><span>Always select <em>Duplicate Consolidation</em> as the download option. Validate and block/delete confirmed duplicates before migration.</span></div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE: EMAIL CLEANING ══════════════════ -->
+  <div class="page" id="page-email">
+    <div class="section-header">
+      <div class="section-title">Email Address Cleaning</div>
+      <div class="section-sub">Enter partner IDs → download the input CSV → run the Email Cleaning notebook in Databricks → download the output.</div>
+    </div>
+    <div class="info-banner">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.15rem;color:var(--primary)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><strong>Manual workflow.</strong> Download the CSV below, log into Databricks, upload and run the notebook, then download the output report from FileStore.</div>
+    </div>
+    <div class="wf-page-grid">
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Enter Partner IDs
+          </span>
+          <span class="pill">Step 1</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem;">Enter the BP / Partner numbers to check for Celaning email addresses, then download the CSV.</p>
+          <form id="emailForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="emailRequester">Your name</label>
+                <input id="emailRequester" type="text" placeholder="e.g. Gagan C"/>
+              </div>
+              <div class="field">
+                <label for="emailSystem">Source system</label>
+                <select id="emailSystem">
+                  <option value="PMD">PMD</option>
+                  <option value="P08">P08</option>
+                  <option value="P2R">P2R</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="emailIds">Partner / BP numbers</label>
+                <textarea id="emailIds" placeholder="One per line or comma separated:&#10;10001&#10;10002&#10;10003"></textarea>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Input CSV
+              </button>
+              <button type="reset" class="btn btn-ghost">Clear</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Run & Download
+          </span>
+          <span class="pill">Steps 2–4</span>
+        </div>
+        <div class="card-body">
+          <div class="steps-list">
+            <div class="step-row">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <strong>Upload CSV & Run Email Dedup Notebook</strong>
+                <p>Log into Databricks. Upload the CSV to FileStore and run the Email Deduplication notebook in your workspace.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks Workspace
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <strong>Download Email Dedup Output</strong>
+                <p>After the notebook completes, download the output CSV from Databricks FileStore.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net/browse/files/FileStore" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks FileStore
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <strong>Validate & Action</strong>
+                <p>Review the output. Block or merge duplicate email records in the source system before migration.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE: CONTACT DEDUP ══════════════════ -->
+  <div class="page" id="page-contact">
+    <div class="section-header">
+      <div class="section-title">Contact Person Deduplication</div>
+      <div class="section-sub">Enter partner IDs → download the input CSV → run the Contact Dedup notebook in Databricks → download the output.</div>
+    </div>
+    <div class="info-banner">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.15rem;color:var(--primary)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><strong>Manual workflow.</strong> Download the CSV below, log into Databricks, upload and run the notebook, then download the output report from FileStore.</div>
+    </div>
+    <div class="wf-page-grid">
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Enter Partner IDs
+          </span>
+          <span class="pill">Step 1</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem;">Enter BP / Partner numbers to identify duplicate contact persons, then download the CSV.</p>
+          <form id="contactForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="contactRequester">Your name</label>
+                <input id="contactRequester" type="text" placeholder="e.g. Gagan C"/>
+              </div>
+              <div class="field">
+                <label for="contactSystem">Source system</label>
+                <select id="contactSystem">
+                  <option value="PMD">PMD</option>
+                  <option value="P08">P08</option>
+                  <option value="P2R">P2R</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="matchMode">Matching mode</label>
+                <select id="matchMode">
+                  <option value="Self">Self-match (same system)</option>
+                  <option value="Cross">Cross-system (PMD vs P08)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="contactCountry">Country <span class="sub-label">(optional)</span></label>
+                <input id="contactCountry" type="text" placeholder="e.g. IN, US, DE"/>
+              </div>
+              <div class="field full">
+                <label for="contactIds">Partner / BP numbers</label>
+                <textarea id="contactIds" placeholder="One per line or comma separated:&#10;10001&#10;10002&#10;10003"></textarea>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download Input CSV
+              </button>
+              <button type="reset" class="btn btn-ghost">Clear</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Run & Download
+          </span>
+          <span class="pill">Steps 2–4</span>
+        </div>
+        <div class="card-body">
+          <div class="steps-list">
+            <div class="step-row">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <strong>Upload CSV & Run Contact Dedup Notebook</strong>
+                <p>Log into Databricks. Upload the CSV to FileStore and run the Contact Deduplication notebook.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks Workspace
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <strong>Download Contact Dedup Output</strong>
+                <p>After the notebook finishes, download the output CSV from Databricks FileStore.</p>
+                <a class="db-link" href="https://adb-4071335540424391.11.azuredatabricks.net/browse/files/FileStore" target="_blank" rel="noopener">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Open Databricks FileStore
+                </a>
+              </div>
+            </div>
+            <div class="step-row">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <strong>Validate & Action</strong>
+                <p>Review the output. Delete or merge duplicate contacts in the source system. Document findings before migration.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ══════════════════ PAGE: GUIDE ══════════════════ -->
+  <div class="page" id="page-guide">
+    <div class="section-header">
+      <div class="section-title">Full Process Guide</div>
+      <div class="section-sub">End-to-end reference — Databricks extraction through CDQ validation.</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">End-to-End Steps</span><span class="pill">Reference</span></div>
+      <div class="card-body">
+        <div class="steps-list">
+          <div class="step-row"><div class="step-num">1</div><div class="step-content"><strong>Load Golden List into Databricks</strong><p>Upload the Excel golden list to Databricks FileStore. Load with Pandas → convert to Spark DataFrame.</p></div></div>
+          <div class="step-row"><div class="step-num">2</div><div class="step-content"><strong>Map to General Mapping Template (CDQ Schema)</strong><p>Cast and rename columns: Name (CONCAT NAME1–4), Country, City, Postal Code (STRING), Tax Numbers 1–5 (STRING — empty for US data), VAT Number.</p></div></div>
+          <div class="step-row"><div class="step-num">3</div><div class="step-content"><strong>CVI Linkage — Join Tables</strong><p>Join PMD_but000_view + PMD_cvi_cust_link_view + PMD_cvi_vend_link_view. Always filter: <code>OPtype ≠ 'D'</code> to exclude deleted records.</p></div></div>
+          <div class="step-row"><div class="step-num">4</div><div class="step-content"><strong>Generate External ID</strong><p>Formula: <code>BP_Number + '_C' + Customer_Number + '_V' + Vendor_Number</code>. Use COALESCE on all fields.</p></div></div>
+          <div class="step-row"><div class="step-num">5</div><div class="step-content"><strong>Create Final Template View</strong><p>UNION ALL of Customer_View (KNA1) and Vendor_View (LFA1) into Final_Template.</p></div></div>
+          <div class="step-row"><div class="step-num">6</div><div class="step-content"><strong>Export CSV & Upload to CDQ</strong><p>Export Final_Template as CSV. Upload via CDQ → Data Mirror Management → General Mapping.</p><a class="db-link" href="https://cdq.com" target="_blank" rel="noopener"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open CDQ Portal</a></div></div>
+          <div class="step-row"><div class="step-num">7</div><div class="step-content"><strong>Configure Duplicate Matching</strong><p>Upload Configuration File. Set thresholds. Mode: self-match (one source) or linkage (Pattern + Candidate).</p></div></div>
+          <div class="step-row"><div class="step-num">8</div><div class="step-content"><strong>Download Results</strong><p>Always select <strong>Duplicate Consolidation</strong>. Validate and block/delete duplicates before migration.</p></div></div>
+        </div>
+
+        <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--divider);">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;margin-bottom:1rem;">Key Rules</div>
+          <div class="rules-grid">
+            <div class="step-row"><div class="step-content"><strong>OPtype filter</strong><p>Always exclude OPtype = 'D' in all CVI joins — deleted records only.</p></div></div>
+            <div class="step-row"><div class="step-content"><strong>US Tax Data</strong><p>Tax Number 1–5 must be NULL / empty for all US records before CDQ upload.</p></div></div>
+            <div class="step-row"><div class="step-content"><strong>Data types</strong><p>Cast Postal Code and all Tax Numbers to STRING — no numeric formatting.</p></div></div>
+            <div class="step-row"><div class="step-content"><strong>Name format</strong><p>CONCAT(COALESCE(NAME1,''), ' ', COALESCE(NAME2,''), ' ', COALESCE(NAME3,''), ' ', COALESCE(NAME4,''))</p></div></div>
+            <div class="step-row"><div class="step-content"><strong>External ID NULLs</strong><p>Always use COALESCE to handle NULL values in the External ID concat formula.</p></div></div>
+            <div class="step-row"><div class="step-content"><strong>Download option</strong><p>Always select "Duplicate Consolidation" when downloading results from CDQ.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────
-const DATABRICKS_HOST = 'https://adb-4071335540424391.11.azuredatabricks.net';
-const JOB_ID          = '653392786486601';
-const CVI_FILE_PATH   = '/Workspace/Users/gagan.c@bayer.com/GOLDEN_LIST_PATH/cvi_output_latest.csv';
-const POLL_INTERVAL_MS = 6000;
-// ─────────────────────────────────────────────────────────────────────────
-
-// Theme toggle
-const root = document.documentElement;
+// ── THEME ────────────────────────────────────────────────────────────────
+const html = document.documentElement;
 let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-root.setAttribute('data-theme', theme);
-function setIcon(){
-  document.querySelector('[data-theme-toggle]').innerHTML = theme === 'dark'
-    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
-    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+html.setAttribute('data-theme', theme);
+function setThemeIcon(){
+  document.getElementById('themeBtn').innerHTML = theme === 'dark'
+    ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 }
-setIcon();
-document.querySelector('[data-theme-toggle]').addEventListener('click', () => {
+setThemeIcon();
+document.getElementById('themeBtn').addEventListener('click', () => {
   theme = theme === 'dark' ? 'light' : 'dark';
-  root.setAttribute('data-theme', theme);
-  setIcon();
+  html.setAttribute('data-theme', theme);
+  setThemeIcon();
 });
 
-// Stepper
-function setStep(n){
+// ── TABS ─────────────────────────────────────────────────────────────────
+function goTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + id));
+}
+document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => goTab(b.dataset.tab)));
+
+// ── DEDUP STEPPER ─────────────────────────────────────────────────────────
+function setDedupStep(n){
   for(let i=1;i<=5;i++){
-    const el=document.getElementById('s'+i);
+    const el = document.getElementById('ds'+i);
+    if(!el) continue;
     el.classList.remove('active','done');
-    if(i<n) el.classList.add('done');
-    else if(i===n) el.classList.add('active');
+    if(i < n) el.classList.add('done');
+    else if(i === n) el.classList.add('active');
   }
 }
 
-// Logging
-const logBox = document.getElementById('logBox');
-function log(msg, cls=''){
-  const t = new Date().toLocaleTimeString('en-GB');
-  logBox.innerHTML += `<div class="log-line"><span class="log-time">${t}</span><span class="${cls}">${msg}</span></div>`;
-  logBox.scrollTop = logBox.scrollHeight;
+// ── CSV DOWNLOAD HELPER ───────────────────────────────────────────────────
+function parseIds(raw){ return [...new Set(raw.split(/[\n,;\s]+/).map(v=>v.trim()).filter(Boolean))]; }
+
+function downloadCSV(filename, rows, headers) {
+  const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
-// Status panel
-function setStatus(state, icon, title, msg){
-  const p=document.getElementById('statusPanel');
-  p.className='status-panel '+state;
-  p.innerHTML=`<div class="status-icon">${icon}</div><div><div class="status-title">${title}</div><div class="status-msg">${msg}</div></div>`;
-  document.getElementById('statusBadge').textContent = title;
-}
-
-// Progress
-function showProgress(indeterminate=true, pct=0){
-  const w=document.getElementById('progressWrap');
-  const b=document.getElementById('progressBar');
-  w.style.display='block';
-  if(indeterminate){b.classList.add('indeterminate');b.style.width='30%';}
-  else{b.classList.remove('indeterminate');b.style.width=pct+'%';}
-}
-function hideProgress(){document.getElementById('progressWrap').style.display='none';}
-
-// Parse IDs
-function parseIds(raw){
-  return [...new Set(raw.split(/[\n,;\s]+/).map(v=>v.trim()).filter(Boolean))];
-}
-
-// Sample loader
-document.getElementById('sampleBtn').addEventListener('click',()=>{
-  document.getElementById('requester').value='Business Team';
-  document.getElementById('sourceSystem').value='PMD';
-  document.getElementById('idType').value='Vendor';
-  document.getElementById('country').value='IN';
-  document.getElementById('rawIds').value='5001\n5002\n5003\n5004';
-  log('Sample data loaded. Click Run CVI Extraction.','log-ok');
+// ── DEDUP FORM ─────────────────────────────────────────────────────────────
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  document.getElementById('requester').value = 'Business Team';
+  document.getElementById('sourceSystem').value = 'PMD';
+  document.getElementById('idType').value = 'Vendor';
+  document.getElementById('country').value = 'IN';
+  document.getElementById('rawIds').value = '5001\n5002\n5003\n5004';
 });
 
-// Main form submit
-document.getElementById('intakeForm').addEventListener('submit', async (e)=>{
+document.getElementById('dedupForm').addEventListener('submit', e => {
   e.preventDefault();
-  const token = document.getElementById('apiToken').value.trim();
-  const rawIds = document.getElementById('rawIds').value;
-  const ids = parseIds(rawIds);
-  const sourceSystem = document.getElementById('sourceSystem').value;
-  const idType = document.getElementById('idType').value;
-  const requester = document.getElementById('requester').value.trim();
-  const country = document.getElementById('country').value.trim();
-
-  if(!token){alert('Please enter your Databricks API token.');return;}
-  if(!ids.length){alert('Please enter at least one Vendor or Customer ID.');return;}
-
-  const btn=document.getElementById('runBtn');
-  btn.disabled=true;
-  btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Running...';
-
-  document.getElementById('downloadBox').classList.remove('visible');
-  document.getElementById('statIDs').textContent = ids.length;
-  document.getElementById('statSystem').textContent = sourceSystem;
-  document.getElementById('statRunID').textContent = '...';
-
-  setStep(2);
-  setStatus('running','🔄','Running','Triggering Databricks notebook via API...');
-  showProgress(true);
-  log(`Submitting ${ids.length} ${idType} IDs from ${sourceSystem}...`,'log-run');
-
-  // Build notebook parameters
-  const notebookParams = {
-    ID_LIST: ids.join(','),
-    ID_TYPE: idType,
-    SOURCE_SYSTEM: sourceSystem,
-    REQUESTER: requester || 'Business User',
-    COUNTRY_FILTER: country || '',
-    IS_US_DATA: country.toUpperCase() === 'US' ? 'true' : 'false'
-  };
-
-  try {
-    // Trigger Databricks Job via REST API
-    const triggerRes = await fetch(`${DATABRICKS_HOST}/api/2.1/jobs/run-now`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        job_id: JOB_ID,
-        notebook_params: notebookParams
-      })
-    });
-
-    if(!triggerRes.ok){
-      const err = await triggerRes.text();
-      throw new Error(`Trigger failed: ${triggerRes.status} — ${err}`);
-    }
-
-    const triggerData = await triggerRes.json();
-    const runId = triggerData.run_id;
-    document.getElementById('statRunID').textContent = runId;
-    log(`Job triggered. Run ID: ${runId}`,'log-ok');
-    log('Polling job status every 6 seconds...','log-run');
-
-    // Poll for completion
-    await pollJobStatus(runId, token);
-
-  } catch(err){
-    setStatus('error','❌','Error',err.message);
-    showProgress(false,0);
-    hideProgress();
-    log('ERROR: '+err.message,'log-err');
-    btn.disabled=false;
-    btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run CVI Extraction';
-    setStep(1);
-  }
+  const ids = parseIds(document.getElementById('rawIds').value);
+  if(!ids.length){ alert('Please enter at least one ID.'); return; }
+  const requester = document.getElementById('requester').value || 'Business User';
+  const system    = document.getElementById('sourceSystem').value;
+  const idType    = document.getElementById('idType').value;
+  const country   = document.getElementById('country').value;
+  const ts        = new Date().toISOString().slice(0,19).replace('T',' ');
+  const rows = ids.map(id => [id, idType, system, country, requester, ts]);
+  downloadCSV(`dedup_input_${system}_${idType}_${Date.now()}.csv`,
+    rows, ['ID','ID_Type','Source_System','Country','Requested_By','Timestamp']);
+  setDedupStep(2);
 });
 
-// Poll job status
-async function pollJobStatus(runId, token){
-  let attempts = 0;
-  const maxAttempts = 60; // 6 min timeout
+// ── EMAIL FORM ─────────────────────────────────────────────────────────────
+document.getElementById('emailForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const ids = parseIds(document.getElementById('emailIds').value);
+  if(!ids.length){ alert('Please enter at least one Partner/BP number.'); return; }
+  const requester = document.getElementById('emailRequester').value || 'Business User';
+  const system    = document.getElementById('emailSystem').value;
+  const ts        = new Date().toISOString().slice(0,19).replace('T',' ');
+  const rows = ids.map(id => [id, system, requester, ts]);
+  downloadCSV(`email_dedup_input_${system}_${Date.now()}.csv`,
+    rows, ['Partner_Number','Source_System','Requested_By','Timestamp']);
+});
 
-  const poll = async () => {
-    if(attempts >= maxAttempts){
-      setStatus('error','⏱️','Timeout','Job is taking longer than expected. Check Databricks directly.');
-      hideProgress();
-      resetBtn();
-      return;
+// ── CONTACT FORM ───────────────────────────────────────────────────────────
+document.getElementById('contactForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const ids = parseIds(document.getElementById('contactIds').value);
+  if(!ids.length){ alert('Please enter at least one Partner/BP number.'); return; }
+  const requester  = document.getElementById('contactRequester').value || 'Business User';
+  const system     = document.getElementById('contactSystem').value;
+  const matchMode  = document.getElementById('matchMode').value;
+  const country    = document.getElementById('contactCountry').value;
+  const ts         = new Date().toISOString().slice(0,19).replace('T',' ');
+  const rows = ids.map(id => [id, system, matchMode, country, requester, ts]);
+  downloadCSV(`contact_dedup_input_${system}_${Date.now()}.csv`,
+    rows, ['Partner_Number','Source_System','Match_Mode','Country','Requested_By','Timestamp']);
+});
+</script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
     }
-    attempts++;
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
 
     try {
-      const res = await fetch(`${DATABRICKS_HOST}/api/2.1/jobs/runs/get?run_id=${runId}`,{
-        headers:{'Authorization':`Bearer ${token}`}
-      });
-      const data = await res.json();
-      const lifeCycle = data.state?.life_cycle_state || '';
-      const resultState = data.state?.result_state || '';
-      const stateMsg = data.state?.state_message || '';
-
-      log(`[${attempts}] ${lifeCycle} ${resultState ? '→ '+resultState : ''} ${stateMsg ? '('+stateMsg+')' : ''}`, 'log-run');
-
-      if(lifeCycle === 'TERMINATED'){
-        if(resultState === 'SUCCESS'){
-          onJobSuccess(runId, token);
-        } else {
-          const errMsg = `Job ended with state: ${resultState}. ${stateMsg}`;
-          setStatus('error','❌','Job Failed', errMsg);
-          hideProgress();
-          log('Job FAILED: '+errMsg,'log-err');
-          resetBtn();
-          setStep(1);
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
         }
-        return;
+        clone.style.cssText = parts.join("");
       }
+    } catch (_error) {}
 
-      if(['INTERNAL_ERROR','SKIPPED'].includes(lifeCycle)){
-        setStatus('error','❌','Error',`Unexpected state: ${lifeCycle}`);
-        hideProgress();
-        resetBtn();
-        setStep(1);
-        return;
-      }
-
-      setTimeout(poll, POLL_INTERVAL_MS);
-
-    } catch(err){
-      log('Poll error: '+err.message,'log-err');
-      setTimeout(poll, POLL_INTERVAL_MS);
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
     }
-  };
-  setTimeout(poll, POLL_INTERVAL_MS);
-}
-
-function onJobSuccess(runId, token){
-  setStep(3);
-  setStatus('success','✅','CVI Ready','Databricks job completed. Your CVI output is ready to download.');
-  showProgress(false, 100);
-  setTimeout(hideProgress, 2000);
-  log('Job SUCCEEDED. CVI output file ready.','log-ok');
-  document.getElementById('downloadBox').classList.add('visible');
-  resetBtn();
-
-  // Download button
-  document.getElementById('downloadCviBtn').onclick = () => downloadCvi(token);
-}
-
-async function downloadCvi(token){
-  setStep(4);
-  log('Fetching CVI file from Databricks workspace...','log-run');
-  try {
-    // Download via Databricks workspace files API
-    const encodedPath = encodeURIComponent(CVI_FILE_PATH);
-    const res = await fetch(`${DATABRICKS_HOST}/api/2.0/workspace/export?format=SOURCE&path=${encodedPath}`,{
-      headers:{'Authorization':`Bearer ${token}`}
-    });
-    if(!res.ok) throw new Error(`File fetch failed: ${res.status}`);
-    const data = await res.json();
-    // The content is base64-encoded
-    const csvContent = atob(data.content);
-    const blob = new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cvi_output_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    log('CVI CSV downloaded successfully.','log-ok');
-    setStep(4);
-  } catch(err){
-    log('Download error: '+err.message+'. Try downloading from Databricks directly.','log-err');
-    // Fallback: open Databricks file URL in new tab
-    window.open(`${DATABRICKS_HOST}/files/Workspace/Users/gagan.c@bayer.com/GOLDEN_LIST_PATH/cvi_output_latest.csv`,'_blank');
   }
-}
 
-function resetBtn(){
-  const btn=document.getElementById('runBtn');
-  btn.disabled=false;
-  btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run CVI Extraction';
-}
-</script> 
-</body>
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
 </html>
-// Fallback: open Databricks file URL in new tab
-
